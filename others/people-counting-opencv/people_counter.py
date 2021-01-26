@@ -212,8 +212,8 @@ while True:
 			# centroid and the mean of *previous* centroids will tell
 			# us in which direction the object is moving (negative for
 			# 'up' and positive for 'down')
-			y = [c[1] for c in to.centroids]
-			direction = centroid[1] - np.mean(y)
+			y = [c[0] for c in to.centroids]
+			direction = centroid[0] - np.mean(y)
 			to.centroids.append(centroid)
 
 			# check to see if the object has been counted or not
@@ -221,14 +221,14 @@ while True:
 				# if the direction is negative (indicating the object
 				# is moving up) AND the centroid is above the center
 				# line, count the object
-				if direction < 0 and centroid[1] < H // 2:
+				if direction < 0 and centroid[0] < W // 2:
 					totalUp += 1
 					to.counted = True
 
 				# if the direction is positive (indicating the object
 				# is moving down) AND the centroid is below the
 				# center line, count the object
-				elif direction > 0 and centroid[1] > H // 2:
+				elif direction > 0 and centroid[0] > W // 2:
 					totalDown += 1
 					to.counted = True
 
@@ -245,8 +245,8 @@ while True:
 	# construct a tuple of information we will be displaying on the
 	# frame
 	info = [
-		("Up", totalUp),
-		("Down", totalDown),
+		("In", totalUp),
+		("Out", totalDown),
 		("Status", status),
 	]
 
