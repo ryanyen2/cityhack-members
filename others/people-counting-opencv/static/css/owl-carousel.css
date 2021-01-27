@@ -42,9 +42,9 @@
 }
 
 .owl-controls {
-  @media (max-width: @screen-sm-max) {
-    top: -120px;
-  }
+  /*@media (max-width: @screen-sm-max) {*/
+  /*  top: -120px;*/
+  /*}*/
   top: -200px;
   width: 100%;
   text-align: center;
@@ -61,7 +61,6 @@
 
 .owl-controls .bg-prev {
   position: absolute;
-  z-index: 1;
   width: 50px;
   height: 50px;
   z-index:10; 
