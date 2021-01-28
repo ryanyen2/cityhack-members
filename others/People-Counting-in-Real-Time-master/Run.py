@@ -44,7 +44,7 @@ def run():
 	# if a video path was not supplied, grab a reference to the ip camera
 	if not args.get("input", False):
 		print("[INFO] Starting the live stream..")
-		vs = VideoStream(config.url).start()
+		vs = VideoStream(src=0).start()
 		time.sleep(2.0)
 
 	# otherwise, grab a reference to the video file
