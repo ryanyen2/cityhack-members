@@ -14,6 +14,12 @@ import numpy as np
 import argparse
 import dlib
 
+import sys
+
+sys.path.append('../../src/')
+from backend.firebase import get_data
+
+
 # initialize a flask object
 app = Flask(__name__)
 
