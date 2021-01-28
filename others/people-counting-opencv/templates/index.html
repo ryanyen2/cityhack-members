@@ -288,7 +288,7 @@ https://templatemo.com/tm-526-vanilla
                         <li><a href="#"><i class="fa fa-dribbble"></i></a></li>
                     </ul>
                     <p>Copyright &copy; 2019 Company Name 
-            
+                    <span id="demo"></span> <button onclick="getLocation()">loc</button>
             		- Design: <a rel="nofollow noopener" href="https://templatemo.com"><em>TemplateMo</em></a></p>
                 </div>
             </div>
@@ -339,6 +339,21 @@ https://templatemo.com/tm-526-vanilla
           });
         });
     </script>
+    <script>
+    var x = document.getElementById("demo");
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+      } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+      }
+    }
 
+    function showPosition(position) {
+      x.innerHTML = "Latitude: " + position.coords.latitude +
+      "<br>Longitude: " + position.coords.longitude;
+      alert(position);
+    }
+    </script>
 </body>
 </html>

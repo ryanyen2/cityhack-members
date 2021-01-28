@@ -17,7 +17,7 @@ import dlib
 import sys
 
 sys.path.append('../../src/')
-from backend.firebase import get_data
+from backend.firebase import get_data, set_data
 
 
 # initialize a flask object
@@ -68,8 +68,11 @@ def people_counter():
     # initialize the total number of frames processed thus far, along
     # with the total number of objects that have moved either up or down
     totalFrames = 0
-    totalRight = 0
-    totalLeft = 0
+    totalRight = get_data('people_counting_opencv/totalRight')
+    totalLeft = get_data('people_counting_opencv/totalLeft')
+
+    previous_left_count = totalLeft
+    previous_right_count = totalRight
 
     # loop over frames from the video stream
     while True:
@@ -234,11 +237,31 @@ def people_counter():
         # then update the FPS counter
         totalFrames += 1
         fps.update()
+        if previous_left_count != totalLeft or previous_right_count != totalRight:
+            set_data('people_counting_opencv', {'totalLeft': totalLeft, 'totalRight': totalRight})
+            previous_left_count = totalLeft
+            previous_right_count = totalRight
 
         # acquire the lock, set the output frame, and release the
         # lock
         with lock:
             outputFrame = frame.copy()
+
+
+# previous_count = -1
+# def update_count(totalLeft, totalRight):
+#     current_count = abs(totalLeft - totalRight)
+#     if previous_count != current_count:
+#         get_and_set_data(
+#             ['people_counting_opencv/totalLeft', 'people_counting_opencv/totalRight'],
+#             'people_counting_opencv',
+#             lambda x,y: {
+#                 'totalLeft': x + totalLeft,
+#                 'totalRight': x + totalRight
+#             }
+#         )
+#         set_data('people_counting_opencv', {'LocationA': current_count})
+#         previous_count = current_count
 
 
 def generate():
