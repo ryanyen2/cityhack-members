@@ -5,7 +5,7 @@ from imutils.video import VideoStream
 from imutils.video import FPS
 from flask import Response
 from flask import Flask
-from flask import render_template
+from flask import render_template, send_from_directory
 import threading
 import imutils
 import time
@@ -28,7 +28,7 @@ app = Flask(__name__)
 # are viewing the stream)
 outputFrame = None
 lock = threading.Lock()
-vs = VideoStream(src=0).start()
+vs = VideoStream(src='http://175.159.79.4:8080/video').start()
 time.sleep(2.0)
 fps = FPS().start()
 
@@ -68,8 +68,8 @@ def people_counter():
     # initialize the total number of frames processed thus far, along
     # with the total number of objects that have moved either up or down
     totalFrames = 0
-    totalRight = get_data('people_counting_opencv/totalRight')
-    totalLeft = get_data('people_counting_opencv/totalLeft')
+    totalRight = get_data('people_counting_opencv'+args['save_to']+'/totalRight')
+    totalLeft = get_data('people_counting_opencv'+args['save_to']+'/totalLeft')
 
     previous_left_count = totalLeft
     previous_right_count = totalRight
@@ -89,6 +89,7 @@ def people_counter():
         # if the frame dimensions are empty, set them
         if W is None or H is None:
             (H, W) = frame.shape[:2]
+        # print(W,H)
 
         # initialize the current status along with our list of bounding
         # box rectangles returned by either (1) our object detector or
@@ -181,6 +182,10 @@ def people_counter():
             # if there is no existing trackable object, create one
             if to is None:
                 to = TrackableObject(objectID, centroid)
+                if centroid[0] < W // 2:
+                    to.state = 'left'
+                else:
+                    to.state = 'right'
 
             # otherwise, there is a trackable object so we can utilize it
             # to determine direction
@@ -194,20 +199,22 @@ def people_counter():
                 to.centroids.append(centroid)
 
                 # check to see if the object has been counted or not
-                if not to.counted:
-                    # if the direction is negative (indicating the object
-                    # is moving up) AND the centroid is above the center
-                    # line, count the object
-                    if direction < 0 and centroid[0] < W // 2:
-                        totalLeft += 1
-                        to.counted = True
+                # if not to.counted:
+                # if the direction is negative (indicating the object
+                # is moving up) AND the centroid is above the center
+                # line, count the object
+                if to.state == 'right' and centroid[0] < W // 2:
+                    totalLeft += 1
+                    # to.counted = True
+                    to.state = 'left'
 
-                    # if the direction is positive (indicating the object
-                    # is moving down) AND the centroid is below the
-                    # center line, count the object
-                    elif direction > 0 and centroid[0] > W // 2:
-                        totalRight += 1
-                        to.counted = True
+                # if the direction is positive (indicating the object
+                # is moving down) AND the centroid is below the
+                # center line, count the object
+                elif to.state == 'left' and centroid[0] > W // 2:
+                    totalRight += 1
+                    # to.counted = True
+                    to.state = 'right'
 
             # store the trackable object in our dictionary
             trackableObjects[objectID] = to
@@ -238,7 +245,7 @@ def people_counter():
         totalFrames += 1
         fps.update()
         if previous_left_count != totalLeft or previous_right_count != totalRight:
-            set_data('people_counting_opencv', {'totalLeft': totalLeft, 'totalRight': totalRight})
+            set_data('people_counting_opencv'+args['save_to'], {'totalLeft': totalLeft, 'totalRight': totalRight})
             previous_left_count = totalLeft
             previous_right_count = totalRight
 
@@ -293,22 +300,36 @@ def video_feed():
                     mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
+@app.route('/static/<path:filename>')
+def sfd(filename):
+    # return the response generated along with the specific media
+    # type (mime type)
+    print(filename)
+    return send_from_directory('../static', filename, as_attachment=True)
+
+
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
     # construct the argument parser and parse command line arguments
     ap = argparse.ArgumentParser()
-    ap.add_argument("-p", "--prototxt", required=True,
-                    help="path to Caffe 'deploy' prototxt file")
-    ap.add_argument("-m", "--model", required=True,
-                    help="path to Caffe pre-trained model")
+    ap.add_argument("-p", "--prototxt",
+                    help="path to Caffe 'deploy' prototxt file",
+                    default='./mobilenet_ssd/MobileNetSSD_deploy.prototxt')
+    ap.add_argument("-m", "--model",
+                    help="path to Caffe pre-trained model",
+                    default='./mobilenet_ssd/MobileNetSSD_deploy.caffemodel')
     ap.add_argument("-c", "--confidence", type=float, default=0.4,
                     help="minimum probability to filter weak detections")
     ap.add_argument("-s", "--skip-frames", type=int, default=30,
                     help="# of skip frames between detections")
-    ap.add_argument("-i", "--ip", type=str, required=True,
-                    help="ip address of the device")
-    ap.add_argument("-o", "--port", type=int, required=True,
-                    help="ephemeral port number of the server (1024 to 65535)")
+    ap.add_argument("-i", "--ip", type=str,
+                    help="ip address of the device",
+                    default='127.0.0.1'
+                    )
+    ap.add_argument("-o", "--port", type=int,
+                    help="ephemeral port number of the server (1024 to 65535)",default=8000)
+    ap.add_argument("-t", "--save_to", type=str,
+                    help="save to which firebase name?", default='')
     args = vars(ap.parse_args())
     # start a thread that will perform motion detection
     t = threading.Thread(target=people_counter)

@@ -204,6 +204,10 @@ while True:
 		# if there is no existing trackable object, create one
 		if to is None:
 			to = TrackableObject(objectID, centroid)
+			if centroid[0] < W // 2:
+				to.state = 'left'
+			else:
+				to.state = 'right'
 
 		# otherwise, there is a trackable object so we can utilize it
 		# to determine direction
@@ -217,22 +221,24 @@ while True:
 			to.centroids.append(centroid)
 
 			# check to see if the object has been counted or not
-			if not to.counted:
-				# if the direction is negative (indicating the object
-				# is moving up) AND the centroid is above the center
-				# line, count the object
-				if direction < 0 and centroid[0] < W // 2:
-					totalUp += 1
-					to.counted = True
+			# if not to.counted:
+			# if the direction is negative (indicating the object
+			# is moving up) AND the centroid is above the center
+			# line, count the object
+			if to.state == 'right' and centroid[0] < W // 2:
+				totalUp += 1
+				# to.counted = True
+				to.state = 'left'
 
-				# if the direction is positive (indicating the object
-				# is moving down) AND the centroid is below the
-				# center line, count the object
-				elif direction > 0 and centroid[0] > W // 2:
-					totalDown += 1
-					to.counted = True
+			# if the direction is positive (indicating the object
+			# is moving down) AND the centroid is below the
+			# center line, count the object
+			elif to.state == 'left' and centroid[0] > W // 2:
+				totalDown += 1
+				# to.counted = True
+				to.state = 'right'
 
-		# store the trackable object in our dictionary
+				# store the trackable object in our dictionary
 		trackableObjects[objectID] = to
 
 		# draw both the ID of the object and the centroid of the
